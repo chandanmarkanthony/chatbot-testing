@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Chat UI</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; margin:0; padding:12px; }
+    #header { font-weight:600; margin-bottom:6px; }
+    #messages { height:60vh; overflow:auto; border:1px solid #eee; padding:8px; border-radius:6px; background:#fff; }
+    .msg { margin:6px 0; }
+    .bot { color:#111; }
+    .you { color:#007bff; text-align:right; }
+    #inputArea { display:flex; gap:8px; margin-top:8px; }
+    input { flex:1; padding:8px; border-radius:6px; border:1px solid #ccc; }
+    button { padding:8px 12px; border-radius:6px; border:none; background:#007bff; color:white; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div id="header">Chat</div>
+  <div id="metaInfo" style="font-size:13px;color:#666;margin-bottom:6px;"></div>
+  <div id="messages"></div>
+
+  <div id="inputArea">
+    <input id="txt" placeholder="Type your question..." />
+    <button id="send">Send</button>
+  </div>
+
+  <script>
+    // read query params passed by chatbot.js
+    const params = new URLSearchParams(window.location.search);
+    const project = params.get("project") || "";
+    const title = params.get("title") ? decodeURIComponent(params.get("title")) : "";
+    const description = params.get("description") ? decodeURIComponent(params.get("description")) : "";
+
+    const metaInfo = document.getElementById("metaInfo");
+    metaInfo.innerHTML = title ? `<strong>${title}</strong><div style="margin-top:4px;">${description}</div>` : "";
+
+    const messagesEl = document.getElementById("messages");
+    function pushSys(text) {
+      messagesEl.innerHTML += `<div class="msg bot">${text}</div>`;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function pushUser(text) {
+      messagesEl.innerHTML += `<div class="msg you"><b>You:</b> ${text}</div>`;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    // Sample greeting
+    if (title) pushSys(`Welcome! You are viewing: ${title}`);
+
+    document.getElementById("send").addEventListener("click", send);
+    document.getElementById("txt").addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+
+    async function send() {
+      const input = document.getElementById("txt");
+      const text = input.value.trim();
+      if (!text) return;
+      pushUser(text);
+
+      // Save to backend (store-chat)
+      try {
+        await fetch("https://YOUR_VERCEL_DOMAIN/api/store-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project,
+            title,
+            description,
+            message: text,
+            direction: "user",
+            ts: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to store chat:", err);
+      }
+
+      // bot reply (example static reply). Replace with AI / backend call as needed.
+      setTimeout(() => {
+        const reply = `Thanks for asking about ${project || "this project"}. We will get back to you shortly.`;
+        pushSys(reply);
+
+        // store bot reply
+        fetch("https://YOUR_VERCEL_DOMAIN/api/store-chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            project,
+            title,
+            description,
+            message: reply,
+            direction: "bot",
+            ts: new Date().toISOString()
+          })
+        }).catch(()=>{});
+      }, 700);
+
+      input.value = "";
+    }
+  </script>
+</body>
+</html>
