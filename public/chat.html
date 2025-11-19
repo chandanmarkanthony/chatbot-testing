@@ -61,7 +61,7 @@
 
       // Save to backend (store-chat)
       try {
-        await fetch("https://YOUR_VERCEL_DOMAIN/api/store-chat", {
+        fetch("https://chatbot-testing-roan.vercel.app/api/store-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -83,7 +83,7 @@
         pushSys(reply);
 
         // store bot reply
-        fetch("https://YOUR_VERCEL_DOMAIN/api/store-chat", {
+        fetch("https://chatbot-testing-roan.vercel.app/api/store-chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
